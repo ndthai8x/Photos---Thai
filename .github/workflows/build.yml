@@ -1,0 +1,44 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Convert icon to ICO
+      shell: python
+      run: |
+        from PIL import Image
+        import os
+        if os.path.exists("icon.png"):
+            img = Image.open("icon.png")
+            img.save("app_icon.ico", format="ICO", sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
+            print("Tao app_icon.ico thanh cong.")
+        else:
+            print("Khong tim thay icon.png")
+
+    - name: Package with PyInstaller
+      run: |
+        pyinstaller --noconfirm --onedir --windowed --add-data "icon.png;." --icon="app_icon.ico" --name="GooglePhotosSlideshow" app.py
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GooglePhotosSlideshow-Windows
+        path: dist/GooglePhotosSlideshow/
